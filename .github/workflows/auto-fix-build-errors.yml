@@ -23,56 +23,27 @@ jobs:
           git lfs install
           git lfs pull
 
-      - name: Download Artifacts
-        uses: actions/github-script@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }}
-            });
-            
-            const buildLog = artifacts.data.artifacts.find(artifact => artifact.name === "ipa-files");
-            if (!buildLog) {
-              console.log("No build log artifacts found.");
-              return;
-            }
-            
-            const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: buildLog.id,
-              archive_format: 'zip'
-            });
-            
-            const fs = require('fs');
-            fs.writeFileSync('artifact.zip', Buffer.from(download.data));
-            
-            console.log("Downloaded artifact.zip");
+          node-version: '20'
 
-      - name: Extract Artifacts
+      - name: Download Artifacts
         run: |
-          mkdir -p artifact-contents
-          unzip -o artifact.zip -d artifact-contents || echo "No artifacts to extract"
-          ls -la artifact-contents || echo "No artifact contents"
+          # Make scripts executable
+          chmod +x scripts/ci/*.sh
           
-          if [ -f "artifact-contents/build_log.txt" ]; then
-            echo "Build log found, copying for analysis..."
-            cp artifact-contents/build_log.txt ./
-          else
-            echo "::warning::No build log found in artifacts"
-          fi
-
-      - name: Install Python Dependencies
-        run: |
-          pip3 install html
+          # Download artifacts using the helper script
+          ./scripts/ci/download-artifacts.sh "${{ github.event.workflow_run.id }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Build Error Analysis
         id: analysis
         run: |
-          chmod +x scripts/ci/auto-fix-build-errors.py
+          # No special Python libraries needed - using standard library only
           
+          # Run analysis script
           if [ -f "build_log.txt" ]; then
             echo "Analyzing build log..."
             python3 scripts/ci/auto-fix-build-errors.py build_log.txt || echo "Analysis completed with errors"
@@ -105,45 +76,15 @@ jobs:
       - name: Generate Summary
         if: steps.analysis.outputs.report_generated == 'true'
         run: |
-          echo "## 📊 Build Error Analysis Report" > $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "A detailed analysis of the build errors has been generated." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Extract summary information from the JSON report
-          if [ -f "build_error_report.json" ]; then
-            ERROR_COUNT=$(grep -o '"error_count":[0-9]*' build_error_report.json | cut -d ":" -f2)
-            WARNING_COUNT=$(grep -o '"warning_count":[0-9]*' build_error_report.json | cut -d ":" -f2)
-            
-            echo "### Summary" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "* 🛑 **Errors**: ${ERROR_COUNT:-0}" >> $GITHUB_STEP_SUMMARY
-            echo "* ⚠️ **Warnings**: ${WARNING_COUNT:-0}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "### Common Issues" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Include top issues from the report
-          if [ -f "build_error_report.txt" ]; then
-            # Extract top error types
-            echo "#### Top Error Types" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -A 5 "ERROR TYPES:" build_error_report.txt >> $GITHUB_STEP_SUMMARY || echo "No error types found"
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Please download the full HTML report from the artifacts for a comprehensive analysis." >> $GITHUB_STEP_SUMMARY
+          # Use the dedicated script to generate the GitHub step summary
+          ./scripts/ci/generate-report-summary.sh
 
-      - name: Create Comment on PR
+      - name: Determine PR Number
+        id: pr-finder
         if: github.event.workflow_run.event == 'pull_request' && steps.analysis.outputs.report_generated == 'true'
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            
             // Get PR number from the workflow run
             const run = await github.rest.actions.getWorkflowRun({
               owner: context.repo.owner,
@@ -153,43 +94,19 @@ jobs:
             
             // Extract PR number from the run data
             const prNumber = run.data.pull_requests[0]?.number;
-            if (!prNumber) {
+            if (prNumber) {
+              console.log(`Found PR number: ${prNumber}`);
+              return prNumber;
+            } else {
               console.log("Could not determine PR number from workflow run");
-              return;
+              return '';
             }
-            
-            // Read summary information from the JSON report
-            if (fs.existsSync('build_error_report.json')) {
-              const reportData = JSON.parse(fs.readFileSync('build_error_report.json', 'utf8'));
-              const errorCount = reportData.summary.error_count;
-              const warningCount = reportData.summary.warning_count;
-              
-              // Create a comment on the PR
-              const body = `## 🔍 Build Error Analysis Report
-              
-This PR contains:
-- 🛑 **${errorCount} errors**
-- ⚠️ **${warningCount} warnings**
+          result-encoding: string
 
-<details>
-<summary>Click to see error type breakdown</summary>
-
-\`\`\`
-${Object.entries(reportData.summary.error_types)
-  .map(([type, count]) => `${type}: ${count}`)
-  .join('\n')}
-\`\`\`
-</details>
-
-Please check the workflow run for the full HTML report with error details and suggestions for fixing them.
-              `;
-              
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: body.replace(/^\s+/gm, '')  // Remove leading spaces
-              });
-              
-              console.log(`Created comment on PR #${prNumber}`);
-            }
+      - name: Create Comment on PR
+        if: github.event.workflow_run.event == 'pull_request' && steps.analysis.outputs.report_generated == 'true' && steps.pr-finder.outputs.result != ''
+        run: |
+          # Use dedicated script to create PR comment
+          ./scripts/ci/create-pr-comment.sh "${{ steps.pr-finder.outputs.result }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
