@@ -635,235 +635,235 @@ private func handleResignApp(app: NSManagedObject, fullPath: URL, indexPath: Ind
                     }
                 )
             }
-        } else {
-            showNoCertificatesAlert()
         }
+    } else {
+        showNoCertificatesAlert()
     }
+}
 
     private func showNoCertificatesAlert() {
-        let alert = UIAlertController(
-            title: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_TITLE"),
-            message: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_DESCRIPTION"),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String.localized("LAME"), style: .default))
-        present(alert, animated: true)
-    }
+    let alert = UIAlertController(
+        title: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_TITLE"),
+        message: String.localized("APP_SIGNING_VIEW_CONTROLLER_NO_CERTS_ALERT_DESCRIPTION"),
+        preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: String.localized("LAME"), style: .default))
+    present(alert, animated: true)
+}
 
     private func handleDownloadedAppAction(
-        app: NSManagedObject,
-        uuidPath: URL?,
-        appName: String
-    ) {
-        let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
+    app: NSManagedObject,
+    uuidPath: URL?,
+    appName: String
+) {
+    let signingDataWrapper = SigningDataWrapper(signingOptions: UserDefaults.standard.signingOptions)
 
-        // Sign button
-        let signButton = PopupViewControllerButton(
-            title: signingDataWrapper.signingOptions.installAfterSigned
-                ? String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN_INSTALL", arguments: appName)
-                : String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN", arguments: appName),
-            color: .tintColor.withAlphaComponent(0.9)
-        )
-        signButton.onTap = { [weak self] in
-            guard let self = self else { return }
-            self.popupVC.dismiss(animated: true)
-            self.startSigning(app: app)
-        }
-
-        // Install button
-        let installButton = PopupViewControllerButton(
-            title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName),
-            color: .quaternarySystemFill,
-            titleColor: .tintColor
-        )
-        installButton.onTap = { [weak self] in
-            guard let self = self else { return }
-            self.popupVC.dismiss(animated: true) {
-                self.showInstallConfirmationAlert(app: app, filePath: uuidPath?.path ?? "")
-            }
-        }
-
-        popupVC.configureButtons([signButton, installButton])
-        configurePopupDetents(hasUpdate: false)
-        present(popupVC, animated: true)
+    // Sign button
+    let signButton = PopupViewControllerButton(
+        title: signingDataWrapper.signingOptions.installAfterSigned
+            ? String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN_INSTALL", arguments: appName)
+            : String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_SIGN", arguments: appName),
+        color: .tintColor.withAlphaComponent(0.9)
+    )
+    signButton.onTap = { [weak self] in
+        guard let self = self else { return }
+        self.popupVC.dismiss(animated: true)
+        self.startSigning(app: app)
     }
+
+    // Install button
+    let installButton = PopupViewControllerButton(
+        title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL", arguments: appName),
+        color: .quaternarySystemFill,
+        titleColor: .tintColor
+    )
+    installButton.onTap = { [weak self] in
+        guard let self = self else { return }
+        self.popupVC.dismiss(animated: true) {
+            self.showInstallConfirmationAlert(app: app, filePath: uuidPath?.path ?? "")
+        }
+    }
+
+    popupVC.configureButtons([signButton, installButton])
+    configurePopupDetents(hasUpdate: false)
+    present(popupVC, animated: true)
+}
 
     private func showInstallConfirmationAlert(app: NSManagedObject, filePath: String) {
-        let alertController = UIAlertController(
-            title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM"),
-            message: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM_DESCRIPTION"),
-            preferredStyle: .alert
-        )
+    let alertController = UIAlertController(
+        title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM"),
+        message: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_INSTALL_CONFIRM_DESCRIPTION"),
+        preferredStyle: .alert
+    )
 
-        let confirmAction = UIAlertAction(
-            title: String.localized("INSTALL"),
-            style: .default
-        ) { [weak self] _ in
-            self?.startInstallProcess(app: app, filePath: filePath)
-        }
-
-        let cancelAction = UIAlertAction(
-            title: String.localized("CANCEL"),
-            style: .cancel
-        )
-
-        alertController.addAction(confirmAction)
-        alertController.addAction(cancelAction)
-        present(alertController, animated: true)
+    let confirmAction = UIAlertAction(
+        title: String.localized("INSTALL"),
+        style: .default
+    ) { [weak self] _ in
+        self?.startInstallProcess(app: app, filePath: filePath)
     }
+
+    let cancelAction = UIAlertAction(
+        title: String.localized("CANCEL"),
+        style: .cancel
+    )
+
+    alertController.addAction(confirmAction)
+    alertController.addAction(cancelAction)
+    present(alertController, animated: true)
+}
 
     private func configurePopupDetents(hasUpdate: Bool) {
-        let detentHeight = hasUpdate ? 150.0 : 270.0
-        let detent: UISheetPresentationController.Detent = ._detent(
-            withIdentifier: "PopupDetent",
-            constant: detentHeight
-        )
+    let detentHeight = hasUpdate ? 150.0 : 270.0
+    let detent: UISheetPresentationController.Detent = ._detent(
+        withIdentifier: "PopupDetent",
+        constant: detentHeight
+    )
 
-        if let presentationController = popupVC.presentationController as? UISheetPresentationController {
-            presentationController.detents = [detent, .medium()]
-            presentationController.prefersGrabberVisible = true
-        }
+    if let presentationController = popupVC.presentationController as? UISheetPresentationController {
+        presentationController.detents = [detent, .medium()]
+        presentationController.prefersGrabberVisible = true
     }
+}
 
-    // Implementation moved to LibraryViewController+Types extension
+// Implementation moved to LibraryViewController+Types extension
 
-    // MARK: - Legacy method for backward compatibility
+// MARK: - Legacy method for backward compatibility
 
-    // This method is kept for compatibility with existing code
+// This method is kept for compatibility with existing code
     @available(*, deprecated, message: "Use startSigning(app:) instead")
     func startSigning(meow: NSManagedObject) {
-        // Call the method with the original parameter name to match caller expectations
-        startSigning(meow: meow)
-    }
+    // Call the method with the original parameter name to match caller expectations
+    startSigning(meow: meow)
+}
 
     override func tableView(
-        _: UITableView,
-        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
-    ) -> UISwipeActionsConfiguration? {
-        // Access method directly without self, ensuring scope is correct
-        guard let app = getApplication(row: indexPath.row, section: indexPath.section) else {
-            return nil
+    _: UITableView,
+    trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
+) -> UISwipeActionsConfiguration? {
+    // Access method directly without self, ensuring scope is correct
+    guard let app = getApplication(row: indexPath.row, section: indexPath.section) else {
+        return nil
+    }
+
+    let deleteAction = UIContextualAction(
+        style: .destructive,
+        title: String.localized("DELETE")
+    ) { [weak self] _, _, completionHandler in
+        guard let self = self else {
+            completionHandler(false)
+            return
         }
 
-        let deleteAction = UIContextualAction(
-            style: .destructive,
-            title: String.localized("DELETE")
-        ) { [weak self] _, _, completionHandler in
-            guard let self = self else {
-                completionHandler(false)
-                return
-            }
-
-            do {
-                switch indexPath.section {
-                case 0:
-                    if let signedApp = app as? SignedApps {
-                        try CoreDataManager.shared.deleteAllSignedAppContentWithThrow(for: signedApp)
-                        self.signedApps?.remove(at: indexPath.row)
-                        self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
-                    }
-                case 1:
-                    if let downloadedApp = app as? DownloadedApps {
-                        try CoreDataManager.shared.deleteAllDownloadedAppContentWithThrow(for: downloadedApp)
-                        self.downloadedApps?.remove(at: indexPath.row)
-                        self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
-                    }
-                default:
-                    break
+        do {
+            switch indexPath.section {
+            case 0:
+                if let signedApp = app as? SignedApps {
+                    try CoreDataManager.shared.deleteAllSignedAppContentWithThrow(for: signedApp)
+                    self.signedApps?.remove(at: indexPath.row)
+                    self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
                 }
-                completionHandler(true)
-            } catch {
-                backdoor.Debug.shared.log(
-                    message: "Error deleting app: \(error)",
-                    type: LogType.error
+            case 1:
+                if let downloadedApp = app as? DownloadedApps {
+                    try CoreDataManager.shared.deleteAllDownloadedAppContentWithThrow(for: downloadedApp)
+                    self.downloadedApps?.remove(at: indexPath.row)
+                    self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+                }
+            default:
+                break
+            }
+            completionHandler(true)
+        } catch {
+            backdoor.Debug.shared.log(
+                message: "Error deleting app: \(error)",
+                type: LogType.error
+            )
+            completionHandler(false)
+        }
+    }
+
+    deleteAction.backgroundColor = UIColor.systemRed
+    let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+    configuration.performsFirstActionWithFullSwipe = true
+
+    return configuration
+}
+
+    override func tableView(
+    _: UITableView,
+    contextMenuConfigurationForRowAt indexPath: IndexPath,
+    point _: CGPoint
+) -> UIContextMenuConfiguration? {
+    // Access methods directly without self, ensuring scope is correct
+    guard let app = getApplication(row: indexPath.row, section: indexPath.section),
+          let filePath = getApplicationFilePath(
+              with: app,
+              row: indexPath.row,
+              section: indexPath.section
+          )
+    else {
+        return nil
+    }
+
+    return UIContextMenuConfiguration(
+        identifier: nil,
+        actionProvider: { [weak self] _ in
+            guard let self = self else { return UIMenu() }
+
+            var actions: [UIAction] = []
+
+            // View details action
+            let infoAction = UIAction(
+                title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DATEILS"),
+                image: UIImage(systemName: "info.circle")
+            ) { [weak self] _ in
+                guard let self = self else { return }
+
+                let viewController = AppsInformationViewController()
+                viewController.source = app
+                viewController.filePath = filePath
+                let navigationController = UINavigationController(rootViewController: viewController)
+
+                if #available(iOS 15.0, *) {
+                    if let presentationController = navigationController
+                        .presentationController as? UISheetPresentationController
+                    {
+                        presentationController.detents = [.medium(), .large()]
+                    }
+                }
+
+                self.present(navigationController, animated: true)
+            }
+            actions.append(infoAction)
+
+            // Open in Files action
+            let filesAction = UIAction(
+                title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_LN_FILES"),
+                image: UIImage(systemName: "folder")
+            ) { _ in
+                let parentPath = filePath.deletingLastPathComponent()
+                let documentURL = parentPath.absoluteString.replacingOccurrences(
+                    of: "file://",
+                    with: "shareddocuments://"
                 )
-                completionHandler(false)
-            }
-        }
 
-        deleteAction.backgroundColor = UIColor.systemRed
-        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
-        configuration.performsFirstActionWithFullSwipe = true
-
-        return configuration
-    }
-
-    override func tableView(
-        _: UITableView,
-        contextMenuConfigurationForRowAt indexPath: IndexPath,
-        point _: CGPoint
-    ) -> UIContextMenuConfiguration? {
-        // Access methods directly without self, ensuring scope is correct
-        guard let app = getApplication(row: indexPath.row, section: indexPath.section),
-              let filePath = getApplicationFilePath(
-                  with: app,
-                  row: indexPath.row,
-                  section: indexPath.section
-              )
-        else {
-            return nil
-        }
-
-        return UIContextMenuConfiguration(
-            identifier: nil,
-            actionProvider: { [weak self] _ in
-                guard let self = self else { return UIMenu() }
-
-                var actions: [UIAction] = []
-
-                // View details action
-                let infoAction = UIAction(
-                    title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_VIEW_DATEILS"),
-                    image: UIImage(systemName: "info.circle")
-                ) { [weak self] _ in
-                    guard let self = self else { return }
-
-                    let viewController = AppsInformationViewController()
-                    viewController.source = app
-                    viewController.filePath = filePath
-                    let navigationController = UINavigationController(rootViewController: viewController)
-
-                    if #available(iOS 15.0, *) {
-                        if let presentationController = navigationController
-                            .presentationController as? UISheetPresentationController
-                        {
-                            presentationController.detents = [.medium(), .large()]
+                if let url = URL(string: documentURL) {
+                    UIApplication.shared.open(url, options: [:]) { success in
+                        if success {
+                            backdoor.Debug.shared.log(message: "File opened successfully.")
+                        } else {
+                            backdoor.Debug.shared.log(message: "Failed to open file.")
                         }
                     }
-
-                    self.present(navigationController, animated: true)
+                } else {
+                    backdoor.Debug.shared.log(message: "Invalid file URL", type: LogType.error)
                 }
-                actions.append(infoAction)
-
-                // Open in Files action
-                let filesAction = UIAction(
-                    title: String.localized("LIBRARY_VIEW_CONTROLLER_SIGN_ACTION_OPEN_LN_FILES"),
-                    image: UIImage(systemName: "folder")
-                ) { _ in
-                    let parentPath = filePath.deletingLastPathComponent()
-                    let documentURL = parentPath.absoluteString.replacingOccurrences(
-                        of: "file://",
-                        with: "shareddocuments://"
-                    )
-
-                    if let url = URL(string: documentURL) {
-                        UIApplication.shared.open(url, options: [:]) { success in
-                            if success {
-                                backdoor.Debug.shared.log(message: "File opened successfully.")
-                            } else {
-                                backdoor.Debug.shared.log(message: "Failed to open file.")
-                            }
-                        }
-                    } else {
-                        backdoor.Debug.shared.log(message: "Invalid file URL", type: LogType.error)
-                    }
-                }
-                actions.append(filesAction)
-
-                return UIMenu(title: "", children: actions)
             }
-        )
-    }
+            actions.append(filesAction)
+
+            return UIMenu(title: "", children: actions)
+        }
+    )
 }
 
 // MARK: - Fetch Data Extension
