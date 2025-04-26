@@ -724,6 +724,7 @@ private func handleResignApp(app: NSManagedObject, fullPath: URL, indexPath: Ind
             presentationController.prefersGrabberVisible = true
         }
     }
+}
 
     // Implementation moved to LibraryViewController+Types extension
 
