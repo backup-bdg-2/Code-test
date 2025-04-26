@@ -58,6 +58,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				README.md,
 			);
 			target = 33BA378A2BF8159F00FF530A /* backdoor */;
 		};
@@ -65,6 +66,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				ellekit.deb,
+				README.md,
 			);
 			target = 33BA378A2BF8159F00FF530A /* backdoor */;
 		};
@@ -76,6 +78,7 @@
 			buildPhase = 33BA37892BF8159F00FF530A /* Resources */;
 			membershipExceptions = (
 				ellekit.deb,
+				README.md,
 			);
 		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
