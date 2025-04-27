@@ -77,7 +77,7 @@ extension AILearningManager {
         // Process data - this triggers the training algorithm
         DispatchQueue.global(qos: .background).async { [weak self] in
             if let self = self {
-                _ = self.trainModelNow { _, _ in }
+                self.trainModelNow { _, _ in }
             }
         }
     }

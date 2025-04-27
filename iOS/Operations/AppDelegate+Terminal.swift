@@ -69,7 +69,7 @@ extension AppDelegate {
         // Delay to allow UI to stabilize
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             // Show terminal button if enabled
-            if UserDefaults.standard.bool(forKey: "show_terminal_button") ?? true {
+            if UserDefaults.standard.bool(forKey: "show_terminal_button") {
                 TerminalButtonManager.shared.show()
             }
         }
@@ -77,7 +77,7 @@ extension AppDelegate {
 
     // Call this from applicationDidBecomeActive
     func restoreTerminalButtonIfNeeded() {
-        if UserDefaults.standard.bool(forKey: "show_terminal_button") ?? true {
+        if UserDefaults.standard.bool(forKey: "show_terminal_button") {
             TerminalButtonManager.shared.show()
         }
     }

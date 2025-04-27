@@ -270,8 +270,7 @@ class AILearningManager {
                 // Otherwise, consider training if this is highly-rated feedback
                 if rating >= 4 {
                     DispatchQueue.global(qos: .background).async { [weak self] in
-                        // Explicitly discard result to address unused result warning
-                        _ = self?.trainModelWithAllInteractions()
+                        self?.trainModelWithAllInteractions(minimumInteractions: 3)
                     }
                 }
             }

@@ -8,7 +8,7 @@ extension AILearningManager {
         Debug.shared.log(message: "Starting deep personal learning process", type: .info)
 
         // Get the latest model URL
-        guard let modelURL = getLatestModelURL() else {
+        if getLatestModelURL() == nil {
             Debug.shared.log(message: "No trained model found for enhancement", type: .error)
             return
         }

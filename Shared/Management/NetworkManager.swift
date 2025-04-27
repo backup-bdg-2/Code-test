@@ -197,7 +197,7 @@ final class NetworkManager {
     /// Cancel a specific operation
     /// - Parameter request: The request to cancel
     func cancelOperation(for request: URLRequest) {
-        operationQueueAccessQueue.sync {
+        let _ = operationQueueAccessQueue.sync {
             if let task = activeOperations[request] {
                 task.cancel()
                 activeOperations.removeValue(forKey: request)

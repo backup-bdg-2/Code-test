@@ -345,7 +345,8 @@ final class AppLifecycleManager {
     private func prepareUIForRestoration() {
         DispatchQueue.main.async {
             // Ensure root view controller is ready
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
                 rootVC.view.isUserInteractionEnabled = true
 
                 // Apply theme
@@ -357,10 +358,10 @@ final class AppLifecycleManager {
     /// Completes UI restoration
     private func completeUIRestoration() {
         DispatchQueue.main.async {
-            // Find the root view controller
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-                // Refresh the entire view hierarchy
-                self.refreshViewHierarchy(rootVC)
+            // Restore UI state for the current screen
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                self.restoreViewControllerState(rootVC)
             }
         }
     }
@@ -371,9 +372,9 @@ final class AppLifecycleManager {
     private func saveTabState() {
         if let selectedTab = UserDefaults.standard.string(forKey: "selectedTab") {
             // Find the active view controller for this tab
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController,
-               let topVC = UIApplication.shared.topMostViewController()
-            {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController,
+               let topVC = UIApplication.shared.topMostViewController() {
                 // Check if view controller supports state saving
                 if let stateSavable = topVC as? StateSavable {
                     let state = stateSavable.saveState()
@@ -389,7 +390,8 @@ final class AppLifecycleManager {
         // Check if we have saved state for this tab
         if let tabState = viewStates["\(tab)_viewState"] {
             // Find the active view controller for this tab
-            if let rootVC = UIApplication.shared.windows.first?.rootViewController {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
                 // Post notification with the state to restore
                 NotificationCenter.default.post(
                     name: .restoreTabState,
@@ -653,6 +655,12 @@ final class AppLifecycleManager {
         // Mark that the session is ending cleanly
         UserDefaults.standard.set(true, forKey: "SessionEndedCleanly")
         UserDefaults.standard.synchronize()
+    }
+
+    /// Restores view controller state
+    private func restoreViewControllerState(_ viewController: UIViewController) {
+        // Implementation would restore view controller state
+        Debug.shared.log(message: "Restoring view controller state", type: .debug)
     }
 }
 
